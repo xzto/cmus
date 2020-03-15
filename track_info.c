@@ -222,6 +222,35 @@ static int doublecmp0(double a, double b)
 	return (x > 0) - (x < 0);
 }
 
+// do strcoll but only until the last '/'
+static int my_strcoll_dir(char *a, char *b)
+{
+    int alen = strlen(a);
+    int blen = strlen(b);
+    int res;
+    char *ptr, *aptr, *bptr, aval, bval;
+    aptr = a + alen;
+    bptr = b + blen;
+    aval = 0;
+    bval = 0;
+    for (ptr = aptr - 1; *ptr != '/' && ptr > a; ptr--);
+    if (ptr > a) {
+        aval = *ptr;
+        aptr = ptr;
+        *ptr = 0;
+    }
+    for (ptr = bptr - 1; *ptr != '/' && ptr > b; ptr--);
+    if (ptr > b) {
+        bval = *ptr;
+        bptr = ptr;
+        *ptr = 0;
+    }
+    res = strcoll(a, b);
+    *aptr = aval;
+    *bptr = bval;
+    return res;
+}
+
 /* this function gets called *alot*, it must be very fast */
 int track_info_cmp(const struct track_info *a, const struct track_info *b, const sort_key_t *keys)
 {
@@ -252,6 +281,10 @@ int track_info_cmp(const struct track_info *a, const struct track_info *b, const
 		case SORT_FILENAME:
 			/* NOTE: filenames are not necessarily UTF-8 */
 			res = strcoll(a->filename, b->filename);
+			break;
+		case SORT_FILENAME_DIR:
+			/* NOTE: filenames are not necessarily UTF-8 */
+			res = my_strcoll_dir(a->filename, b->filename);
 			break;
 		case SORT_RG_TRACK_GAIN:
 		case SORT_RG_TRACK_PEAK:
@@ -301,6 +334,7 @@ static const struct {
 	{ "codec_profile",	SORT_CODEC_PROFILE	},
 	{ "media",		SORT_MEDIA		},
 	{ "bpm",		SORT_BPM		},
+	{ "filenamedir",		SORT_FILENAME_DIR		},
 	{ "-artist",		REV_SORT_ARTIST		},
 	{ "-album",		REV_SORT_ALBUM		},
 	{ "-title",		REV_SORT_TITLE		},
@@ -323,6 +357,7 @@ static const struct {
 	{ "-codec_profile",	REV_SORT_CODEC_PROFILE	},
 	{ "-media",		REV_SORT_MEDIA		},
 	{ "-bpm",		REV_SORT_BPM		},
+	{ "-filenamedir",		REV_SORT_FILENAME_DIR		},
 	{ NULL,                 SORT_INVALID            }
 };
 
