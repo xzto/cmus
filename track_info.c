@@ -225,29 +225,20 @@ static int doublecmp0(double a, double b)
 // do strcoll but only until the last '/'
 static int my_strcoll_dir(char *a, char *b)
 {
-    int alen = strlen(a);
-    int blen = strlen(b);
-    int res;
-    char *ptr, *aptr, *bptr, aval, bval;
-    aptr = a + alen;
-    bptr = b + blen;
-    aval = 0;
-    bval = 0;
-    for (ptr = aptr - 1; *ptr != '/' && ptr > a; ptr--);
-    if (ptr > a) {
-        aval = *ptr;
-        aptr = ptr;
-        *ptr = 0;
-    }
-    for (ptr = bptr - 1; *ptr != '/' && ptr > b; ptr--);
-    if (ptr > b) {
-        bval = *ptr;
-        bptr = ptr;
-        *ptr = 0;
-    }
-    res = strcoll(a, b);
-    *aptr = aval;
-    *bptr = bval;
+	int res;
+	int alen = strlen(a);
+	int adirlen;
+	for (adirlen = alen - 1; adirlen >= 0 && a[adirlen] != '/'; adirlen--) {}
+	int blen = strlen(b);
+	int bdirlen;
+	for (bdirlen = blen - 1; bdirlen >= 0 && b[bdirlen] != '/'; bdirlen--) {}
+	int cmplen = adirlen < bdirlen ? adirlen : bdirlen;
+	// NOTE: This is not using `strcoll` because there is no `strncoll`.
+	res = strncmp(a, b, cmplen);
+	if (res == 0) {
+		res = adirlen - bdirlen;
+		res = res < 0 ? -1 : (res > 0 ? 1 : 0);
+	}
     return res;
 }
 
